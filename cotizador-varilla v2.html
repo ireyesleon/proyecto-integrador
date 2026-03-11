@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CotiAcero</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117; --surface: #181c27; --surface2: #1e2333;
+  --border: rgba(255,255,255,0.08); --dim: #2e364d;
+  --orange: #ff5c1a; --orange2: #ff7a40; --gold: #f5c230;
+  --green: #22c55e; --red: #ef4444; --blue: #3b82f6;
+  --text: #f0f2f8; --muted: #6b7a99;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:'Sora',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; max-width:430px; margin:0 auto; padding-bottom:130px; }
+body::before { content:''; position:fixed; top:-100px; left:-100px; width:300px; height:300px; background:radial-gradient(circle,rgba(255,92,26,0.1) 0%,transparent 70%); pointer-events:none; z-index:0; }
+
+/* HEADER */
+.app-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 14px; background:rgba(15,17,23,0.95); backdrop-filter:blur(16px); position:sticky; top:0; z-index:100; border-bottom:1px solid var(--border); }
+.hlogo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; background:linear-gradient(90deg,var(--orange),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.hbadge { display:flex; align-items:center; gap:6px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); padding:5px 10px; border-radius:20px; font-size:11px; color:var(--green); }
+.hbadge-dot { width:6px; height:6px; background:var(--green); border-radius:50%; animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* PROGRESS */
+.progress-wrap { padding:16px 20px 0; }
+.progress-steps { display:flex; align-items:center; }
+.ps { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; position:relative; }
+.ps::after { content:''; position:absolute; top:13px; left:50%; width:100%; height:2px; background:var(--dim); }
+.ps:last-child::after { display:none; }
+.ps.done::after { background:var(--green); }
+.ps.active::after { background:linear-gradient(90deg,var(--orange),var(--dim)); }
+.ps-dot { width:26px; height:26px; border-radius:50%; background:var(--dim); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--muted); position:relative; z-index:1; transition:all 0.3s; }
+.ps.active .ps-dot { background:var(--orange); color:white; box-shadow:0 0 12px rgba(255,92,26,0.5); }
+.ps.done .ps-dot { background:var(--green); color:white; }
+.ps-lbl { font-size:9px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; }
+.ps.active .ps-lbl { color:var(--text); }
+
+/* STEPS */
+.step-section { padding:20px 20px 0; display:none; animation:fadeIn 0.3s ease; }
+.step-section.visible { display:block; }
+.quote-screen { padding:20px; display:none; animation:fadeIn 0.35s ease; }
+.quote-screen.visible { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* SECTION HEAD */
+.section-head { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.section-icon { width:40px; height:40px; background:rgba(255,92,26,0.12); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.section-ttl { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; }
+.section-sub { font-size:11px; color:var(--muted); margin-top:1px; }
+
+/* CARD */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:14px; position:relative; overflow:hidden; }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--orange),transparent 60%); opacity:0.5; }
+
+/* FIELDS */
+.field { margin-bottom:14px; }
+.field:last-child { margin-bottom:0; }
+label { display:block; font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+label .req { color:var(--orange); }
+input, select { width:100%; background:var(--bg); border:1.5px solid var(--dim); border-radius:10px; padding:13px 14px; color:var(--text); font-family:'Sora',sans-serif; font-size:15px; outline:none; -webkit-appearance:none; transition:border-color 0.2s,box-shadow 0.2s; }
+input:focus, select:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(255,92,26,0.12); }
+input::placeholder { color:var(--muted); font-size:14px; }
+
+/* AUTOCOMPLETE */
+.autocomplete-wrap { position:relative; }
+.autocomplete-list { position:fixed; left:0; right:0; background:var(--surface2); border:1px solid rgba(255,92,26,0.3); border-radius:0 0 16px 16px; z-index:500; overflow:hidden; box-shadow:0 16px 48px rgba(0,0,0,0.8); max-height:55vh; overflow-y:auto; display:none; }
+.autocomplete-list.open { display:block; }
+.ac-item { display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.15s; }
+.ac-item:last-child { border-bottom:none; }
+.ac-item:active { background:rgba(255,92,26,0.1); }
+.ac-avatar { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,var(--orange),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:white; flex-shrink:0; font-family:'Bebas Neue',sans-serif; letter-spacing:1px; }
+.ac-info { flex:1; min-width:0; }
+.ac-name { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ac-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.ac-tag { font-size:10px; padding:3px 8px; border-radius:20px; font-weight:600; white-space:nowrap; flex-shrink:0; }
+.tag-vip { background:rgba(245,194,48,0.15); color:var(--gold); }
+.tag-frec { background:rgba(59,130,246,0.15); color:var(--blue); }
+.tag-ocas { background:rgba(107,122,153,0.15); color:var(--muted); }
+.tag-nuevo { background:rgba(34,197,94,0.15); color:var(--green); }
+
+/* AUTOFILL CHIPS */
+.autofill-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+.autofill-chip { background:var(--bg); border:1px solid var(--dim); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:3px; transition:border-color 0.3s; }
+.autofill-chip.filled { border-color:rgba(255,92,26,0.3); }
+.chip-lbl { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+.chip-val { font-size:13px; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color 0.3s; }
+.chip-val.filled { color:var(--text); }
+.stars { display:flex; gap:2px; }
+.star { font-size:14px; color:var(--dim); }
+.star.on { color:var(--gold); }
+
+/* SKU */
+.sku-input-row { display:flex; gap:8px; align-items:stretch; }
+.sku-input-row input { font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:600; letter-spacing:2px; text-transform:uppercase; }
+.sku-btn { background:var(--orange); border:none; border-radius:10px; padding:0 18px; color:white; font-size:18px; cursor:pointer; flex-shrink:0; transition:all 0.2s; display:flex; align-items:center; }
+.sku-btn:active { transform:scale(0.95); }
+.sku-result { margin-top:12px; background:rgba(255,92,26,0.07); border:1px solid rgba(255,92,26,0.2); border-radius:12px; padding:14px; display:none; animation:fadeIn 0.25s ease; }
+.sku-result.visible { display:block; }
+.sku-result-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.sku-icon { font-size:22px; width:44px; height:44px; background:rgba(255,92,26,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sku-name { font-weight:700; font-size:15px; color:var(--text); }
+.sku-code-lbl { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--orange); margin-top:2px; }
+.sku-props { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.sku-prop { background:var(--bg); border-radius:8px; padding:8px 10px; }
+.sp-lbl { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+.sp-val { font-size:13px; font-weight:600; color:var(--text); margin-top:2px; }
+.sku-error { margin-top:10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:12px; font-size:13px; color:#fca5a5; display:none; align-items:center; gap:8px; }
+.sku-error.visible { display:flex; }
+
+/* VOLUME */
+.vol-row { display:flex; align-items:center; gap:10px; }
+.vol-btn { width:44px; height:44px; background:var(--dim); border:none; border-radius:10px; color:var(--text); font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.15s; }
+.vol-btn:active { background:var(--orange); }
+.vol-input-wrap { flex:1; position:relative; }
+.vol-input-wrap input { text-align:center; font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600; padding:10px; }
+.vol-unit { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:11px; color:var(--muted); pointer-events:none; }
+.quick-btns { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.qbtn { flex:1; background:var(--bg); border:1px solid var(--dim); border-radius:8px; padding:8px; color:var(--muted); font-size:12px; cursor:pointer; font-family:'Sora',sans-serif; transition:all 0.15s; min-width:40px; }
+.qbtn:active { background:var(--orange); color:white; border-color:var(--orange); }
+
+/* DELIVERY */
+.delivery-opts { display:flex; flex-direction:column; gap:8px; }
+.delivery-opt { display:flex; align-items:center; gap:12px; padding:13px 14px; background:var(--bg); border:1.5px solid var(--dim); border-radius:12px; cursor:pointer; transition:all 0.2s; }
+.delivery-opt.selected { border-color:var(--orange); background:rgba(255,92,26,0.07); }
+.delivery-opt-icon { font-size:20px; flex-shrink:0; }
+.delivery-opt-info { flex:1; }
+.delivery-opt-name { font-size:14px; font-weight:600; }
+.delivery-opt-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+.delivery-radio { width:20px; height:20px; border-radius:50%; border:2px solid var(--dim); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.delivery-opt.selected .delivery-radio { border-color:var(--orange); }
+.delivery-opt.selected .delivery-radio::after { content:''; width:10px; height:10px; border-radius:50%; background:var(--orange); display:block; }
+
+/* QUOTE SCREEN */
+.quote-hero { background:linear-gradient(145deg,#1e1a14,#1a1410); border:1px solid rgba(255,92,26,0.25); border-radius:20px; padding:24px 20px; position:relative; overflow:hidden; margin-bottom:14px; }
+.quote-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--orange),var(--gold),var(--orange2)); }
+.qh-label { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+.qh-price { font-family:'JetBrains Mono',monospace; font-size:48px; font-weight:600; color:var(--text); line-height:1; }
+.qh-price .cur { font-size:22px; color:var(--muted); vertical-align:top; margin-top:8px; display:inline-block; margin-right:4px; }
+.qh-per { font-size:12px; color:var(--muted); margin-top:4px; margin-bottom:20px; }
+.comp-table { width:100%; border-collapse:collapse; }
+.comp-table tr { border-bottom:1px solid rgba(255,255,255,0.04); }
+.comp-table tr:last-child { border-bottom:none; }
+.comp-table td { padding:9px 0; font-size:13px; }
+.comp-table td:first-child { color:var(--muted); }
+.comp-table td:last-child { text-align:right; font-family:'JetBrains Mono',monospace; font-weight:600; }
+.ct-higher { color:var(--red); }
+.ct-ours { color:var(--orange2); font-size:15px; }
+.ct-diff { font-size:10px; padding:2px 6px; border-radius:10px; margin-left:6px; font-family:'Sora',sans-serif; font-weight:600; background:rgba(34,197,94,0.15); color:var(--green); }
+
+/* SAVINGS */
+.savings-pill { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.sav-icon { font-size:24px; }
+.sav-lbl { font-size:10px; color:var(--green); letter-spacing:1px; text-transform:uppercase; }
+.sav-amt { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--green); }
+
+/* SCORE */
+.score-row { display:flex; align-items:center; gap:16px; }
+.score-ring { width:72px; height:72px; flex-shrink:0; position:relative; }
+.score-ring svg { transform:rotate(-90deg); }
+.score-ring-num { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; }
+.score-title { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; }
+.score-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* STRATEGY */
+.strategy-box { background:rgba(255,92,26,0.06); border:1px solid rgba(255,92,26,0.2); border-radius:14px; padding:16px; margin-bottom:14px; }
+.strategy-head { font-size:11px; font-weight:600; color:var(--orange); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.strategy-box p { font-size:13px; color:#c0c8e0; line-height:1.6; }
+.strategy-box strong { color:var(--text); }
+
+/* SUMMARY */
+.sum-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px 18px; margin-bottom:14px; }
+.sum-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
+.sum-row:last-child { border-bottom:none; }
+.sum-k { color:var(--muted); }
+.sum-v { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); text-align:right; max-width:60%; }
+.sum-v.highlight { color:var(--orange2); font-size:15px; font-weight:700; }
+
+/* BUTTONS */
+.btn-primary { width:100%; background:linear-gradient(135deg,var(--orange),var(--orange2)); border:none; border-radius:14px; padding:17px; color:white; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; cursor:pointer; box-shadow:0 6px 24px rgba(255,92,26,0.35); transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+.btn-primary:active { transform:scale(0.98); }
+.btn-primary:disabled { opacity:0.4; pointer-events:none; }
+.btn-secondary { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:13px 10px; color:var(--muted); font-family:'Sora',sans-serif; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; }
+.btn-secondary:active { background:var(--dim); color:var(--text); }
+.btn-back { display:flex; align-items:center; gap:6px; background:none; border:none; color:var(--muted); font-size:13px; cursor:pointer; padding:0 0 16px 0; font-family:'Sora',sans-serif; }
+.sticky-cta { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:rgba(15,17,23,0.97); backdrop-filter:blur(20px); padding:14px 20px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); z-index:90; }
+.export-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.divider { height:1px; background:var(--border); margin:14px 0; }
+
+@keyframes chipFill { 0%{transform:scale(0.95);opacity:0.5} 60%{transform:scale(1.03)} 100%{transform:scale(1);opacity:1} }
+.chip-anim { animation:chipFill 0.4s ease; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="hlogo">CotiAcero</div>
+  <div class="hbadge"><div class="hbadge-dot"></div>Precios al día</div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-steps">
+    <div class="ps active" id="ps1"><div class="ps-dot">1</div><div class="ps-lbl">Cliente</div></div>
+    <div class="ps" id="ps2"><div class="ps-dot">2</div><div class="ps-lbl">Producto</div></div>
+    <div class="ps" id="ps3"><div class="ps-dot">3</div><div class="ps-lbl">Entrega</div></div>
+    <div class="ps" id="ps4"><div class="ps-dot">4</div><div class="ps-lbl">Cotización</div></div>
+  </div>
+</div>
+
+<!-- STEP 1: CLIENTE -->
+<div class="step-section visible" id="step1">
+  <div class="section-head">
+    <div class="section-icon">👤</div>
+    <div><div class="section-ttl">Cliente</div><div class="section-sub">Busca por nombre, RFC o ID</div></div>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>Buscar cliente <span class="req">*</span></label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="clientSearch" placeholder="Nombre, RFC o razón social…" autocomplete="off" oninput="searchClients(this.value)">
+        <div class="autocomplete-list" id="acList"></div>
+      </div>
+    </div>
+    <div id="clientInfoArea" style="display:none;">
+      <div class="divider"></div>
+      <div style="font-size:10px;letter-spacing:1.5px;color:var(--orange);text-transform:uppercase;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;">⚡ Datos del sistema</div>
+      <div class="autofill-grid">
+        <div class="autofill-chip" id="chip-rfc"><div class="chip-lbl">RFC</div><div class="chip-val" id="val-rfc">—</div></div>
+        <div class="autofill-chip" id="chip-tipo"><div class="chip-lbl">Tipo de cliente</div><div class="chip-val" id="val-tipo">—</div></div>
+        <div class="autofill-chip" id="chip-seg"><div class="chip-lbl">Segmento</div><div class="chip-val" id="val-seg">—</div></div>
+        <div class="autofill-chip" id="chip-cred"><div class="chip-lbl">Crédito disponible</div><div class="chip-val" id="val-cred">—</div></div>
+        <div class="autofill-chip" style="grid-column:span 2;" id="chip-pay"><div class="chip-lbl">Condición de pago habitual</div><div class="chip-val" id="val-pay">—</div></div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:10px;">Historial de compra</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="stars" id="histStars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+        <div style="font-size:13px;color:var(--text);" id="histLabel">—</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;" id="histChips"></div>
+    </div>
+  </div>
+  <div class="sticky-cta">
+    <button class="btn-primary" onclick="goStep(2)" id="btnStep1" disabled>Continuar →</button>
+  </div>
+</div>
+
+<!-- STEP 2: PRODUCTO -->
+<div class="step-section" id="step2">
+  <div class="section-head">
+    <div class="section-icon">🔩</div>
+    <div><div class="section-ttl">Producto</div><div class="section-sub">Ingresa el SKU del catálogo</div></div>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>SKU del producto <span class="req">*</span></label>
+      <div class="sku-input-row">
+        <input type="text" id="skuInput" placeholder="Ej. VCO-38-6M-G42" autocomplete="off" oninput="clearSKU()" onkeydown="if(event.key==='Enter')lookupSKU()">
+        <button class="sku-btn" onclick="lookupSKU()">→</button>
+      </div>
+      <div class="sku-result" id="skuResult"></div>
+      <div class="sku-error" id="skuError">⚠️ SKU no encontrado en catálogo. Verifica el código.</div>
+    </div>
+    <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:10px;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">SKUs de ejemplo</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="skuExamples"></div>
+    </div>
+  </div>
+  <div id="volSection" style="display:none;">
+    <div class="card">
+      <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:12px;">Volumen a cotizar</div>
+      <div class="vol-row">
+        <button class="vol-btn" onclick="changeVol(-5)">−</button>
+        <div class="vol-input-wrap">
+          <input type="number" id="volInput" value="20" min="1" max="500" oninput="state.vol=parseInt(this.value)||1">
+          <span class="vol-unit">TON</span>
+        </div>
+        <button class="vol-btn" onclick="changeVol(5)">+</button>
+      </div>
+      <div class="quick-btns">
+        <button class="qbtn" onclick="setVol(5)">5t</button>
+        <button class="qbtn" onclick="setVol(20)">20t</button>
+        <button class="qbtn" onclick="setVol(50)">50t</button>
+        <button class="qbtn" onclick="setVol(100)">100t</button>
+        <button class="qbtn" onclick="setVol(200)">200t</button>
+      </div>
+    </div>
+  </div>
+  <div class="sticky-cta" style="display:flex;flex-direction:column;gap:8px;">
+    <button class="btn-primary" onclick="goStep(3)" id="btnStep2" disabled>Continuar →</button>
+    <button class="btn-back" onclick="goStep(1)">← Regresar</button>
+  </div>
+</div>
+
+<!-- STEP 3: ENTREGA -->
+<div class="step-section" id="step3">
+  <div class="section-head">
+    <div class="section-icon">🚛</div>
+    <div><div class="section-ttl">Entrega</div><div class="section-sub">¿Dónde y cómo?</div></div>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>Estado destino <span class="req">*</span></label>
+      <select id="estadoSel" onchange="updateCities()">
+        <option value="">— Selecciona estado —</option>
+        <option value="nl">Nuevo León</option><option value="coah">Coahuila</option>
+        <option value="tam">Tamaulipas</option><option value="cdmx">Ciudad de México</option>
+        <option value="jal">Jalisco</option><option value="mex">Estado de México</option>
+        <option value="pue">Puebla</option><option value="chih">Chihuahua</option>
+        <option value="sono">Sonora</option><option value="bc">Baja California</option>
+        <option value="ver">Veracruz</option><option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Ciudad</label>
+      <select id="ciudadSel"><option value="">— Primero selecciona estado —</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:12px;">Modalidad de entrega</div>
+    <div class="delivery-opts">
+      <div class="delivery-opt" onclick="selectDelivery(this,'planta')">
+        <div class="delivery-opt-icon">🏭</div>
+        <div class="delivery-opt-info"><div class="delivery-opt-name">Recoge en planta</div><div class="delivery-opt-desc">LAB origen — sin costo de flete</div></div>
+        <div class="delivery-radio"></div>
+      </div>
+      <div class="delivery-opt" onclick="selectDelivery(this,'lab_dest')">
+        <div class="delivery-opt-icon">🚛</div>
+        <div class="delivery-opt-info"><div class="delivery-opt-name">LAB destino</div><div class="delivery-opt-desc">Flete incluido en precio</div></div>
+        <div class="delivery-radio"></div>
+      </div>
+      <div class="delivery-opt" onclick="selectDelivery(this,'flete_sep')">
+        <div class="delivery-opt-icon">📋</div>
+        <div class="delivery-opt-info"><div class="delivery-opt-name">Flete por separado</div><div class="delivery-opt-desc">Se cotiza independientemente</div></div>
+        <div class="delivery-radio"></div>
+      </div>
+    </div>
+  </div>
+  <div class="sticky-cta" style="display:flex;flex-direction:column;gap:8px;">
+    <button class="btn-primary" onclick="generateQuote()">⚡ GENERAR COTIZACIÓN</button>
+    <button class="btn-back" onclick="goStep(2)">← Regresar</button>
+  </div>
+</div>
+
+<!-- STEP 4: COTIZACIÓN -->
+<div class="quote-screen" id="step4">
+  <button class="btn-back" id="backBtn4" onclick="goStep(3)">← Editar pedido</button>
+
+  <!-- HERO: COMPETENCIA + RANGO -->
+  <div class="quote-hero">
+    <div class="qh-label">Precios de competencia — Sin IVA</div>
+    <div class="divider" style="margin:10px 0 14px;"></div>
+    <table class="comp-table">
+      <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span>Ternium</span></td><td class="ct-higher" id="q-comp1">—</td></tr>
+      <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#f97316;display:inline-block;"></span>Mittal</span></td><td class="ct-higher" id="q-comp2">—</td></tr>
+      <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#eab308;display:inline-block;"></span>Gasa</span></td><td class="ct-higher" id="q-comp3">—</td></tr>
+      <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>SuAcero</span></td><td class="ct-higher" id="q-comp4">—</td></tr>
+    </table>
+  </div>
+
+  <!-- SELECTOR DE PRECIO -->
+  <div class="card" id="priceRangeCard">
+    <div style="font-size:10px;letter-spacing:1.5px;color:var(--orange);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Elige tu precio de oferta</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Mueve el slider dentro del rango autorizado</div>
+
+    <!-- Precio elegido grande -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Precio seleccionado / ton</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:42px;font-weight:700;color:var(--text);line-height:1;">
+        <span style="font-size:20px;color:var(--muted);vertical-align:top;margin-top:6px;display:inline-block;">$</span><span id="chosenPrice">—</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Total: <span id="chosenTotal" style="color:var(--orange2);font-weight:600;">—</span> · Margen: <span id="chosenMargin" style="font-weight:600;">—</span></div>
+    </div>
+
+    <!-- Slider -->
+    <div style="position:relative;padding:0 4px;margin-bottom:10px;">
+      <!-- Etiquetas min/max -->
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">
+        <span>🔴 Mín. autorizado<br><span id="priceMin" style="color:var(--red);font-size:11px;font-weight:700;">—</span></span>
+        <span style="text-align:center;">🎯 Precio sugerido<br><span id="priceSugg" style="color:var(--green);font-size:11px;font-weight:700;">—</span></span>
+        <span style="text-align:right;">🏆 Máx. margen<br><span id="priceMax" style="color:var(--gold);font-size:11px;font-weight:700;">—</span></span>
+      </div>
+      <!-- Track con zonas de color -->
+      <div style="position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(239,68,68,0.3),rgba(34,197,94,0.4),rgba(245,194,48,0.4));margin-bottom:18px;">
+        <div id="sliderFill" style="position:absolute;left:0;top:0;height:100%;border-radius:4px;background:var(--orange);transition:width 0.1s;"></div>
+        <div id="suggMark" style="position:absolute;top:-3px;width:3px;height:14px;background:var(--green);border-radius:2px;transform:translateX(-50%);"></div>
+      </div>
+      <input type="range" id="priceSlider" min="0" max="100" value="40"
+        style="position:absolute;top:22px;left:4px;right:4px;width:calc(100% - 8px);opacity:0;height:24px;cursor:pointer;z-index:2;"
+        oninput="onSliderMove(this.value)">
+    </div>
+
+    <!-- Zonas semáforo -->
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <div style="flex:1;text-align:center;padding:6px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">
+        <div style="font-size:9px;color:var(--red);letter-spacing:1px;text-transform:uppercase;">Agresivo</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Requiere aprobación</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:6px;border-radius:8px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);">
+        <div style="font-size:9px;color:var(--green);letter-spacing:1px;text-transform:uppercase;">Óptimo</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Precio sugerido</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:6px;border-radius:8px;background:rgba(245,194,48,0.08);border:1px solid rgba(245,194,48,0.2);">
+        <div style="font-size:9px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;">Conservador</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Mayor margen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORE + ESTRATEGIA -->
+  <div class="sum-card">
+    <div class="score-row">
+      <div class="score-ring">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="28" fill="none" stroke="#1e2333" stroke-width="8"/>
+          <circle cx="36" cy="36" r="28" fill="none" stroke="var(--orange)" stroke-width="8"
+            stroke-linecap="round" stroke-dasharray="175.9" id="scoreCircle" stroke-dashoffset="175.9"
+            style="transition:stroke-dashoffset 1s ease;"/>
+        </svg>
+        <div class="score-ring-num" id="scoreNum" style="color:var(--orange);">—</div>
+      </div>
+      <div>
+        <div class="score-title">Score Competitivo</div>
+        <div class="score-sub" id="scoreDesc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="strategy-box">
+    <div class="strategy-head">⚡ Nota estratégica</div>
+    <p id="q-strategy">—</p>
+  </div>
+
+  <!-- SAVINGS -->
+  <div class="savings-pill">
+    <div class="sav-icon">💰</div>
+    <div><div class="sav-lbl">Ahorro del cliente vs. SuAcero</div><div class="sav-amt" id="q-savings">—</div></div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="sum-card">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:12px;">Resumen del pedido</div>
+    <div class="sum-row"><span class="sum-k">👤 Cliente</span><span class="sum-v" id="s-client">—</span></div>
+    <div class="sum-row"><span class="sum-k">🔩 SKU</span><span class="sum-v" id="s-prod">—</span></div>
+    <div class="sum-row"><span class="sum-k">⚖️ Volumen</span><span class="sum-v" id="s-vol">—</span></div>
+    <div class="sum-row"><span class="sum-k">📍 Destino</span><span class="sum-v" id="s-dest">—</span></div>
+    <div class="sum-row"><span class="sum-k">💳 Pago</span><span class="sum-v" id="s-pay">—</span></div>
+    <div class="sum-row"><span class="sum-k">🚛 Entrega</span><span class="sum-v" id="s-del">—</span></div>
+    <div class="divider" style="margin:8px 0;"></div>
+    <div class="sum-row"><span class="sum-k" style="font-weight:600;color:var(--text);">💵 Total estimado</span><span class="sum-v highlight" id="s-total">—</span></div>
+  </div>
+
+  <!-- BOTÓN ENVIAR A APROBACIÓN -->
+  <div id="approvalSection">
+    <button class="btn-primary" id="sendApprovalBtn" onclick="sendForApproval()" style="margin-bottom:8px;">
+      📤 ENVIAR A APROBACIÓN
+    </button>
+    <div style="font-size:11px;color:var(--muted);text-align:center;padding-bottom:4px;">Se notificará al Subgerente Comercial</div>
+  </div>
+
+  <!-- ESTADO: PENDIENTE DE APROBACIÓN -->
+  <div id="pendingSection" style="display:none;">
+    <div style="background:rgba(245,194,48,0.08);border:1px solid rgba(245,194,48,0.25);border-radius:16px;padding:20px;text-align:center;margin-bottom:14px;">
+      <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">Pendiente de aprobación</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;">Cotización enviada al <strong style="color:var(--text);">Subgerente Comercial</strong>.<br>Recibirás una notificación cuando sea revisada.</div>
+      <div style="margin-top:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px;display:inline-flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--muted);">Folio:</span>
+        <span id="folioNum" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</span>
+      </div>
+      <!-- DEMO: simular aprobación -->
+      <div style="margin-top:16px;">
+        <button onclick="simulateApproval()" style="background:rgba(245,194,48,0.15);border:1px solid rgba(245,194,48,0.3);border-radius:10px;padding:10px 20px;color:var(--gold);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:600;">
+          🔑 Demo: Aprobar como Subgerente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADO: APROBADO — COMPARTIR DESBLOQUEADO -->
+  <div id="approvedSection" style="display:none;">
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:16px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
+      <div style="width:44px;height:44px;background:rgba(34,197,94,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">✅</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--green);">Cotización aprobada</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Aprobada por: <strong style="color:var(--text);" id="approverName">—</strong> · <span id="approvalTime">—</span></div>
+      </div>
+    </div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--text);margin-bottom:10px;">Compartir con el cliente</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button class="btn-secondary" style="border-color:rgba(37,211,102,0.3);color:#25d366;" onclick="shareWhatsApp()">
+        <span style="font-size:16px;">💬</span> WhatsApp
+      </button>
+      <button class="btn-secondary" style="border-color:rgba(59,130,246,0.3);color:var(--blue);" onclick="shareEmail()">
+        <span style="font-size:16px;">📧</span> Email
+      </button>
+      <button class="btn-secondary" onclick="sharePDF()">
+        <span style="font-size:16px;">📄</span> PDF
+      </button>
+      <button class="btn-secondary" onclick="saveCRM()">
+        <span style="font-size:16px;">💾</span> Guardar CRM
+      </button>
+    </div>
+  </div>
+
+  <div style="height:40px;"></div>
+</div>
+
+<script>
+// ====== DB ======
+const CLIENTS_DB = [
+  {id:'C001',name:'Constructora Hernández SA',rfc:'CHE910203ABC',tipo:'Constructor/Contratista',seg:'Comercial',cred:'$850,000 MXN',pay:'Crédito 30 días',hist:4,histLabel:'Frecuente',histTags:['12 pedidos 2024','Prom. 45 ton/mes','Sin adeudos'],initials:'CH'},
+  {id:'C002',name:'Ferretería El Clavo SA de CV',rfc:'FCL010705XYZ',tipo:'Ferretería/Tlapalería',seg:'Residencial',cred:'$350,000 MXN',pay:'Contado',hist:3,histLabel:'Ocasional',histTags:['4 pedidos 2024','Prom. 12 ton/pedido'],initials:'FC'},
+  {id:'C003',name:'Gobierno de Nuevo León',rfc:'GNL900101001',tipo:'Gobierno/Licitación',seg:'Infraestructura',cred:'$5,000,000 MXN',pay:'Crédito 45 días',hist:5,histLabel:'VIP / Clave',histTags:['Contrato marco 2024','Volumen anual +800t','Licitación abierta'],initials:'GN'},
+  {id:'C004',name:'Altos Hornos de México',rfc:'AHM521015KJ3',tipo:'Industria Manufacturera',seg:'Industrial',cred:'$2,500,000 MXN',pay:'Crédito 60 días',hist:5,histLabel:'VIP / Clave',histTags:['Cliente desde 2015','Contrato anual'],initials:'AH'},
+  {id:'C005',name:'Desarrolladora Baja Norte',rfc:'DBN180320PQ2',tipo:'Constructor/Contratista',seg:'Residencial',cred:'Sin crédito',pay:'Contado',hist:1,histLabel:'Nuevo',histTags:['Primera compra','Sin historial'],initials:'DB'},
+  {id:'C006',name:'Materiales García e Hijos',rfc:'MGH950614RS5',tipo:'Distribuidor Mayorista',seg:'Comercial',cred:'$1,200,000 MXN',pay:'Crédito 15 días',hist:4,histLabel:'Frecuente',histTags:['8 pedidos 2024','Zona norte'],initials:'MG'},
+];
+
+const SKU_DB = {
+  'VCO-38-6M-G42':{name:'Varilla Corrugada 3/8"',diam:'3/8',type:'Corrugada',grade:'Grado 42',len:'6 m',norm:'NMX-B-294',basePrice:14200},
+  'VCO-12-6M-G42':{name:'Varilla Corrugada 1/2"',diam:'1/2',type:'Corrugada',grade:'Grado 42',len:'6 m',norm:'NMX-B-294',basePrice:13900},
+  'VCO-58-6M-G60':{name:'Varilla Corrugada 5/8"',diam:'5/8',type:'Corrugada',grade:'Grado 60',len:'6 m',norm:'ASTM A615',basePrice:14900},
+  'VCO-34-12-G42':{name:'Varilla Corrugada 3/4"',diam:'3/4',type:'Corrugada',grade:'Grado 42',len:'12 m',norm:'NMX-B-294',basePrice:13600},
+  'VCO-1-12-G60': {name:'Varilla Corrugada 1"',diam:'1',type:'Corrugada',grade:'Grado 60',len:'12 m',norm:'ASTM A615',basePrice:14800},
+  'VLI-38-6M':    {name:'Varilla Lisa 3/8"',diam:'3/8',type:'Lisa',grade:'Grado 42',len:'6 m',norm:'NMX-B-006',basePrice:13500},
+  'VLI-12-6M':    {name:'Varilla Lisa 1/2"',diam:'1/2',type:'Lisa',grade:'Grado 42',len:'6 m',norm:'NMX-B-006',basePrice:13300},
+  'ATR-6-ROL':    {name:'Alambre Trefilado #6',diam:'Cal 6',type:'Trefilado',grade:'Grado 42',len:'Rollo 50kg',norm:'NMX-B-288',basePrice:12800},
+  'MAE-66-610':   {name:'Malla Electrosoldada 6×6',diam:'Varios',type:'Malla',grade:'Grado 42',len:'2.4×6 m',norm:'NMX-B-253',basePrice:15600},
+};
+
+const CLIENT_MOD_MAP = {'Constructor/Contratista':0.97,'Distribuidor Mayorista':0.94,'Ferretería/Tlapalería':0.99,'Gobierno/Licitación':0.96,'Industria Manufacturera':0.95};
+const HIST_MOD_MAP   = {1:1.00,2:1.00,3:0.99,4:0.97,5:0.94};
+const PAY_MOD_MAP    = {'Contado':0.97,'Crédito 15 días':0.99,'Crédito 30 días':1.01,'Crédito 45 días':1.02,'Crédito 60 días':1.04};
+const DEST_MOD_MAP   = {nl:1.00,coah:1.01,tam:1.02,cdmx:1.04,jal:1.03,mex:1.04,pue:1.03,chih:1.05,sono:1.05,bc:1.06,ver:1.02,otro:1.05};
+const DEL_MOD_MAP    = {planta:1.00,lab_dest:1.04,flete_sep:1.00};
+const VOL_MOD = t => t>=200?0.92:t>=100?0.94:t>=50?0.96:t>=20?0.98:1.00;
+const CITIES = {nl:['Monterrey','San Pedro Garza García','Guadalupe','Santa Catarina','San Nicolás'],coah:['Saltillo','Torreón','Monclova','Piedras Negras'],tam:['Reynosa','Matamoros','Tampico','Ciudad Victoria'],cdmx:['Cuauhtémoc','Miguel Hidalgo','Benito Juárez','Coyoacán'],jal:['Guadalajara','Zapopan','San Pedro TLQ'],mex:['Toluca','Naucalpan','Tlalnepantla'],pue:['Puebla','San Andrés Cholula'],chih:['Chihuahua','Ciudad Juárez'],sono:['Hermosillo','Nogales'],bc:['Tijuana','Mexicali'],ver:['Veracruz','Xalapa'],otro:['Otro municipio']};
+
+let state = {client:null,sku:null,vol:20,estado:'',ciudad:'',delivery:''};
+
+// ====== NAVIGATION ======
+function goStep(n){
+  [1,2,3].forEach(i=>document.getElementById('step'+i).classList.remove('visible'));
+  document.getElementById('step4').classList.remove('visible');
+  if(n<=3) document.getElementById('step'+n).classList.add('visible');
+  else document.getElementById('step4').classList.add('visible');
+  for(let i=1;i<=4;i++){
+    const ps=document.getElementById('ps'+i);
+    ps.className='ps'+(i<n?' done':i===n?' active':'');
+    ps.querySelector('.ps-dot').textContent=i<n?'✓':String(i);
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ====== AUTOCOMPLETE ======
+function searchClients(q){
+  const list=document.getElementById('acList');
+  if(!q||q.length<1){list.classList.remove('open');return;}
+  const ql=q.toLowerCase();
+  const res=CLIENTS_DB.filter(c=>c.name.toLowerCase().includes(ql)||c.rfc.toLowerCase().includes(ql)||c.id.toLowerCase().includes(ql));
+  if(!res.length){list.classList.remove('open');return;}
+  // Position dropdown just below the input field
+  const inp=document.getElementById('clientSearch');
+  const rect=inp.getBoundingClientRect();
+  list.style.top=(rect.bottom+4)+'px';
+  list.style.left=rect.left+'px';
+  list.style.right=(window.innerWidth-rect.right)+'px';
+  list.innerHTML=res.map(c=>`
+    <div class="ac-item" onclick="selectClient('${c.id}')">
+      <div class="ac-avatar">${c.initials}</div>
+      <div class="ac-info">
+        <div class="ac-name">${c.name}</div>
+        <div class="ac-sub">${c.rfc} · ${c.id}</div>
+      </div>
+      <div class="ac-tag ${c.hist>=5?'tag-vip':c.hist>=4?'tag-frec':c.hist>=3?'tag-ocas':'tag-nuevo'}">${c.histLabel}</div>
+    </div>`).join('');
+  list.classList.add('open');
+}
+
+function selectClient(id){
+  const c=CLIENTS_DB.find(x=>x.id===id);
+  if(!c)return;
+  state.client=c;
+  document.getElementById('clientSearch').value=c.name;
+  document.getElementById('acList').classList.remove('open');
+  ['rfc','tipo','seg','cred','pay'].forEach(f=>{
+    const map={rfc:c.rfc,tipo:c.tipo,seg:c.seg,cred:c.cred,pay:c.pay};
+    const chip=document.getElementById('chip-'+f);
+    const val=document.getElementById('val-'+f);
+    chip.classList.add('filled','chip-anim');
+    val.textContent=map[f];
+    val.classList.add('filled');
+  });
+  document.querySelectorAll('#histStars .star').forEach((s,i)=>s.className='star'+(i<c.hist?' on':''));
+  document.getElementById('histLabel').textContent=c.histLabel;
+  document.getElementById('histChips').innerHTML=c.histTags.map(t=>`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);">${t}</span>`).join('');
+  document.getElementById('clientInfoArea').style.display='block';
+  const btn=document.getElementById('btnStep1');
+  btn.disabled=false;
+  document.getElementById('clientSearch').blur();
+}
+
+document.addEventListener('click',e=>{if(!e.target.closest('.autocomplete-wrap'))document.getElementById('acList').classList.remove('open');});
+
+// ====== SKU ======
+// Populate example SKUs
+const exampleSKUs=['VCO-38-6M-G42','VCO-12-6M-G42','VCO-58-6M-G60','VCO-34-12-G42','ATR-6-ROL','MAE-66-610'];
+document.getElementById('skuExamples').innerHTML=exampleSKUs.map(s=>
+  `<button onclick="document.getElementById('skuInput').value='${s}';clearSKU();" style="background:var(--dim);border:none;border-radius:8px;padding:5px 10px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;">${s}</button>`
+).join('');
+
+function lookupSKU(){
+  const raw=document.getElementById('skuInput').value.trim().toUpperCase();
+  const res=document.getElementById('skuResult');
+  const err=document.getElementById('skuError');
+  res.classList.remove('visible');
+  err.classList.remove('visible');
+  const prod=SKU_DB[raw];
+  if(!prod){err.classList.add('visible');state.sku=null;document.getElementById('btnStep2').disabled=true;return;}
+  state.sku={...prod,code:raw};
+  res.innerHTML=`
+    <div class="sku-result-head">
+      <div class="sku-icon">🔩</div>
+      <div><div class="sku-name">${prod.name}</div><div class="sku-code-lbl">${raw}</div></div>
+    </div>
+    <div class="sku-props">
+      <div class="sku-prop"><div class="sp-lbl">Tipo</div><div class="sp-val">${prod.type}</div></div>
+      <div class="sku-prop"><div class="sp-lbl">Diámetro</div><div class="sp-val">${prod.diam}"</div></div>
+      <div class="sku-prop"><div class="sp-lbl">Longitud</div><div class="sp-val">${prod.len}</div></div>
+      <div class="sku-prop"><div class="sp-lbl">Norma</div><div class="sp-val">${prod.norm}</div></div>
+    </div>`;
+  res.classList.add('visible');
+  document.getElementById('volSection').style.display='block';
+  const btn=document.getElementById('btnStep2');
+  btn.disabled=false;
+  document.getElementById('skuInput').blur();
+}
+
+function clearSKU(){
+  document.getElementById('skuResult').classList.remove('visible');
+  document.getElementById('skuError').classList.remove('visible');
+  state.sku=null;
+  document.getElementById('btnStep2').disabled=true;
+  document.getElementById('volSection').style.display='none';
+}
+
+// ====== VOLUME ======
+function changeVol(d){const v=Math.min(500,Math.max(1,(parseInt(document.getElementById('volInput').value)||0)+d));document.getElementById('volInput').value=v;state.vol=v;}
+function setVol(v){document.getElementById('volInput').value=v;state.vol=v;}
+
+// ====== DELIVERY ======
+function selectDelivery(el,val){document.querySelectorAll('.delivery-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');state.delivery=val;}
+
+// ====== CITIES ======
+function updateCities(){
+  const e=document.getElementById('estadoSel').value;
+  const s=document.getElementById('ciudadSel');
+  s.innerHTML='<option value="">— Selecciona ciudad —</option>';
+  (CITIES[e]||[]).forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o);});
+  state.estado=e;
+}
+
+// ====== GENERATE QUOTE ======
+let priceState = { min:0, sugg:0, max:0, chosen:0, vol:0, c4:0 };
+
+function generateQuote(){
+  if(!state.client||!state.sku){alert('Completa cliente y producto primero.');return;}
+  const vol=parseInt(document.getElementById('volInput').value)||20;
+  state.vol=vol;
+  state.estado=document.getElementById('estadoSel').value||'nl';
+  state.ciudad=document.getElementById('ciudadSel').value||'';
+
+  let p=state.sku.basePrice;
+  p*=(CLIENT_MOD_MAP[state.client.tipo]||1.0);
+  p*=(HIST_MOD_MAP[state.client.hist]||1.0);
+  let pm=1.0;
+  if(state.client.pay==='Contado') pm=0.97;
+  else if(state.client.pay.includes('15')) pm=0.99;
+  else if(state.client.pay.includes('30')) pm=1.01;
+  else if(state.client.pay.includes('45')) pm=1.02;
+  else if(state.client.pay.includes('60')) pm=1.04;
+  p*=pm;
+  p*=VOL_MOD(vol);
+  p*=(DEST_MOD_MAP[state.estado]||1.02);
+  p*=(DEL_MOD_MAP[state.delivery]||1.0);
+
+  const c1=p*1.072, c2=p*1.058, c3=p*1.041, c4=p*1.029;
+  const d1=Math.round((1-p/c1)*100), d2=Math.round((1-p/c2)*100), d3=Math.round((1-p/c3)*100), d4=Math.round((1-p/c4)*100);
+
+  // Price range: min = p*0.92 (agresivo), sugg = p, max = p*1.06 (conservador)
+  const pMin = Math.round(p * 0.92);
+  const pSugg = Math.round(p);
+  const pMax = Math.round(p * 1.06);
+  priceState = { min:pMin, sugg:pSugg, max:pMax, chosen:pSugg, vol:vol, c4:c4 };
+
+  // Competitor table
+  document.getElementById('q-comp1').innerHTML=`$${fmt(c1)} <span class="ct-diff">-${d1}%</span>`;
+  document.getElementById('q-comp2').innerHTML=`$${fmt(c2)} <span class="ct-diff">-${d2}%</span>`;
+  document.getElementById('q-comp3').innerHTML=`$${fmt(c3)} <span class="ct-diff">-${d3}%</span>`;
+  document.getElementById('q-comp4').innerHTML=`$${fmt(c4)} <span class="ct-diff">-${d4}%</span>`;
+
+  // Price range labels
+  document.getElementById('priceMin').textContent='$'+fmt(pMin);
+  document.getElementById('priceSugg').textContent='$'+fmt(pSugg);
+  document.getElementById('priceMax').textContent='$'+fmt(pMax);
+
+  // Position suggestion marker
+  const suggPct = ((pSugg - pMin) / (pMax - pMin)) * 100;
+  document.getElementById('suggMark').style.left = suggPct + '%';
+
+  // Init slider at suggested price
+  document.getElementById('priceSlider').value = Math.round(((pSugg - pMin) / (pMax - pMin)) * 100);
+  onSliderMove(document.getElementById('priceSlider').value);
+
+  // Score (based on suggested price)
+  const hScores={1:50,2:62,3:72,4:82,5:92};
+  const pScore=Math.min(96,60+d4*5);
+  const hScore=hScores[state.client.hist]||70;
+  const dScore=state.delivery==='planta'?88:state.delivery==='lab_dest'?80:72;
+  const score=Math.round((pScore+hScore+dScore)/3);
+  const offset=175.9-(score/100)*175.9;
+  const color=score>=80?'var(--green)':score>=65?'var(--gold)':'var(--red)';
+  document.getElementById('scoreCircle').style.strokeDashoffset=offset;
+  document.getElementById('scoreCircle').style.stroke=color;
+  document.getElementById('scoreNum').textContent=score;
+  document.getElementById('scoreNum').style.color=color;
+  document.getElementById('scoreDesc').textContent=score>=85?'Propuesta muy competitiva':score>=70?'Propuesta competitiva':'Revisar condiciones';
+
+  // Strategy
+  let strat='';
+  if(state.client.hist>=5&&state.client.pay==='Contado') strat=`<strong>Cliente VIP al contado</strong>: Puedes ofrecer precio agresivo. Propone contrato anual para asegurar volumen y bloqueo a 90 días.`;
+  else if(state.client.tipo.includes('Gobierno')) strat=`<strong>Licitación pública</strong>: Asegura documentación técnica completa (NMX, ASTM). El precio es el diferenciador pero los requisitos técnicos son clave.`;
+  else if(vol>=100) strat=`<strong>Pedido de alto volumen</strong>: El precio agresivo es una palanca válida aquí. Puedes ceder margen sin comprometer la relación.`;
+  else if(state.client.hist===1) strat=`<strong>Cliente nuevo</strong>: Usa el precio sugerido como ancla. Ofrece visita técnica y certificado de calidad para cerrar.`;
+  else strat=`Tu precio es <strong>${d4}% menor</strong> que SuAcero. Mueve el slider al nivel que consideres necesario para cerrar el trato.`;
+  document.getElementById('q-strategy').innerHTML=strat;
+
+  // Summary
+  const cn=state.client.name;
+  document.getElementById('s-client').textContent=cn.length>22?cn.slice(0,20)+'…':cn;
+  document.getElementById('s-prod').textContent=state.sku.code;
+  document.getElementById('s-vol').textContent=vol+' toneladas';
+  document.getElementById('s-dest').textContent=(state.ciudad||state.estado.toUpperCase());
+  document.getElementById('s-pay').textContent=state.client.pay;
+  document.getElementById('s-del').textContent={planta:'Recoge en planta',lab_dest:'LAB destino',flete_sep:'Flete separado'}[state.delivery]||'—';
+
+  // Reset approval state
+  document.getElementById('approvalSection').style.display='block';
+  document.getElementById('pendingSection').style.display='none';
+  document.getElementById('approvedSection').style.display='none';
+  document.getElementById('backBtn4').style.display='flex';
+
+  goStep(4);
+}
+
+// ====== PRICE SLIDER ======
+function onSliderMove(val){
+  const pct = parseInt(val) / 100;
+  const price = Math.round(priceState.min + pct * (priceState.max - priceState.min));
+  priceState.chosen = price;
+
+  // Visual fill
+  document.getElementById('sliderFill').style.width = val + '%';
+
+  // Color feedback
+  const card = document.getElementById('priceRangeCard');
+  let zoneColor;
+  if(pct < 0.35) zoneColor = 'rgba(239,68,68,0.08)';
+  else if(pct < 0.65) zoneColor = 'rgba(34,197,94,0.06)';
+  else zoneColor = 'rgba(245,194,48,0.06)';
+  card.style.background = zoneColor;
+
+  // Chosen price display
+  document.getElementById('chosenPrice').textContent = fmt(price);
+
+  const total = price * priceState.vol;
+  const margin = priceState.c4 > 0 ? Math.round((1 - price/priceState.c4)*100) : 0;
+  document.getElementById('chosenTotal').textContent = '$' + fmtBig(total);
+  document.getElementById('chosenMargin').textContent = margin >= 0
+    ? `<span style="color:var(--green);">-${margin}% vs SuAcero</span>`
+    : `<span style="color:var(--red);">+${Math.abs(margin)}% sobre SuAcero</span>`;
+  document.getElementById('chosenMargin').innerHTML = document.getElementById('chosenMargin').textContent;
+
+  // Update savings
+  const savings = (priceState.c4 - price) * priceState.vol;
+  document.getElementById('q-savings').textContent = savings > 0 ? '$' + fmtBig(savings) + ' MXN' : '—';
+
+  // Update summary total
+  document.getElementById('s-total').textContent = '$' + fmtBig(total);
+}
+
+// ====== SEND FOR APPROVAL ======
+function sendForApproval(){
+  const folio = 'COT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*9000)+1000);
+  document.getElementById('folioNum').textContent = folio;
+  document.getElementById('approvalSection').style.display='none';
+  document.getElementById('pendingSection').style.display='block';
+  document.getElementById('priceSlider').disabled = true;
+  document.getElementById('backBtn4').style.display='none';
+  document.getElementById('priceRangeCard').style.opacity='0.6';
+  document.getElementById('priceRangeCard').style.pointerEvents='none';
+}
+
+// ====== SIMULATE APPROVAL (demo) ======
+function simulateApproval(){
+  const approvers = ['Ing. Ricardo Leal','Lic. Patricia Garza','Ing. Marco Salinas'];
+  const approver = approvers[Math.floor(Math.random()*approvers.length)];
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' · ' + now.toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+  document.getElementById('approverName').textContent = approver;
+  document.getElementById('approvalTime').textContent = timeStr;
+  document.getElementById('pendingSection').style.display='none';
+  document.getElementById('approvedSection').style.display='block';
+}
+
+// ====== SHARE FUNCTIONS ======
+function shareWhatsApp(){
+  const c=state.client, s=state.sku;
+  const msg=`Hola! Te compartimos la cotización aprobada:\n\n🔩 *${s.name}* (${s.code})\n📦 Volumen: ${priceState.vol} ton\n💲 Precio: $${fmt(priceState.chosen)}/ton sin IVA\n💵 Total: $${fmtBig(priceState.chosen*priceState.vol)} MXN\n\n✅ Cotización válida por 5 días hábiles.`;
+  alert('WhatsApp:\n\n' + msg);
+}
+function shareEmail(){ alert('Email enviado al contacto del cliente con la cotización aprobada.'); }
+function sharePDF(){ alert('Generando PDF oficial de la cotización aprobada…'); }
+function saveCRM(){ alert('Cotización guardada en CRM con folio ' + (document.getElementById('folioNum').textContent||'—')); }
+
+function fmt(n){return n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtBig(n){if(n>=1000000)return(n/1000000).toFixed(2)+' M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n.toFixed(0);}
+</script>
+</body>
+</html>
