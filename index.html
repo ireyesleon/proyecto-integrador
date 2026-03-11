@@ -346,27 +346,70 @@ input::placeholder { color:var(--muted); font-size:14px; }
 
 <!-- STEP 4: COTIZACIÓN -->
 <div class="quote-screen" id="step4">
-  <button class="btn-back" onclick="goStep(3)">← Editar pedido</button>
+  <button class="btn-back" id="backBtn4" onclick="goStep(3)">← Editar pedido</button>
 
+  <!-- HERO: COMPETENCIA + RANGO -->
   <div class="quote-hero">
-    <div class="qh-label">Precio sugerido — Sin IVA</div>
-    <div class="qh-price"><span class="cur">$</span><span id="q-price">0.00</span></div>
-    <div class="qh-per">por tonelada · MXN</div>
-    <div class="divider" style="margin:16px 0;"></div>
+    <div class="qh-label">Precios de competencia — Sin IVA</div>
+    <div class="divider" style="margin:10px 0 14px;"></div>
     <table class="comp-table">
       <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span>Ternium</span></td><td class="ct-higher" id="q-comp1">—</td></tr>
       <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#f97316;display:inline-block;"></span>Mittal</span></td><td class="ct-higher" id="q-comp2">—</td></tr>
       <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#eab308;display:inline-block;"></span>Gasa</span></td><td class="ct-higher" id="q-comp3">—</td></tr>
       <tr><td><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:#a78bfa;display:inline-block;"></span>SuAcero</span></td><td class="ct-higher" id="q-comp4">—</td></tr>
-      <tr><td><strong style="color:var(--text);">⭐ Tu precio</strong></td><td class="ct-ours" id="q-ours">—</td></tr>
     </table>
   </div>
 
-  <div class="savings-pill">
-    <div class="sav-icon">💰</div>
-    <div><div class="sav-lbl">Ahorro vs. competidor más barato</div><div class="sav-amt" id="q-savings">—</div></div>
+  <!-- SELECTOR DE PRECIO -->
+  <div class="card" id="priceRangeCard">
+    <div style="font-size:10px;letter-spacing:1.5px;color:var(--orange);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Elige tu precio de oferta</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Mueve el slider dentro del rango autorizado</div>
+
+    <!-- Precio elegido grande -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Precio seleccionado / ton</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:42px;font-weight:700;color:var(--text);line-height:1;">
+        <span style="font-size:20px;color:var(--muted);vertical-align:top;margin-top:6px;display:inline-block;">$</span><span id="chosenPrice">—</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Total: <span id="chosenTotal" style="color:var(--orange2);font-weight:600;">—</span> · Margen: <span id="chosenMargin" style="font-weight:600;">—</span></div>
+    </div>
+
+    <!-- Slider -->
+    <div style="position:relative;padding:0 4px;margin-bottom:10px;">
+      <!-- Etiquetas min/max -->
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">
+        <span>🔴 Mín. autorizado<br><span id="priceMin" style="color:var(--red);font-size:11px;font-weight:700;">—</span></span>
+        <span style="text-align:center;">🎯 Precio sugerido<br><span id="priceSugg" style="color:var(--green);font-size:11px;font-weight:700;">—</span></span>
+        <span style="text-align:right;">🏆 Máx. margen<br><span id="priceMax" style="color:var(--gold);font-size:11px;font-weight:700;">—</span></span>
+      </div>
+      <!-- Track con zonas de color -->
+      <div style="position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(239,68,68,0.3),rgba(34,197,94,0.4),rgba(245,194,48,0.4));margin-bottom:18px;">
+        <div id="sliderFill" style="position:absolute;left:0;top:0;height:100%;border-radius:4px;background:var(--orange);transition:width 0.1s;"></div>
+        <div id="suggMark" style="position:absolute;top:-3px;width:3px;height:14px;background:var(--green);border-radius:2px;transform:translateX(-50%);"></div>
+      </div>
+      <input type="range" id="priceSlider" min="0" max="100" value="40"
+        style="position:absolute;top:22px;left:4px;right:4px;width:calc(100% - 8px);opacity:0;height:24px;cursor:pointer;z-index:2;"
+        oninput="onSliderMove(this.value)">
+    </div>
+
+    <!-- Zonas semáforo -->
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <div style="flex:1;text-align:center;padding:6px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">
+        <div style="font-size:9px;color:var(--red);letter-spacing:1px;text-transform:uppercase;">Agresivo</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Requiere aprobación</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:6px;border-radius:8px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);">
+        <div style="font-size:9px;color:var(--green);letter-spacing:1px;text-transform:uppercase;">Óptimo</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Precio sugerido</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:6px;border-radius:8px;background:rgba(245,194,48,0.08);border:1px solid rgba(245,194,48,0.2);">
+        <div style="font-size:9px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;">Conservador</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Mayor margen</div>
+      </div>
+    </div>
   </div>
 
+  <!-- SCORE + ESTRATEGIA -->
   <div class="sum-card">
     <div class="score-row">
       <div class="score-ring">
@@ -390,6 +433,13 @@ input::placeholder { color:var(--muted); font-size:14px; }
     <p id="q-strategy">—</p>
   </div>
 
+  <!-- SAVINGS -->
+  <div class="savings-pill">
+    <div class="sav-icon">💰</div>
+    <div><div class="sav-lbl">Ahorro del cliente vs. SuAcero</div><div class="sav-amt" id="q-savings">—</div></div>
+  </div>
+
+  <!-- RESUMEN -->
   <div class="sum-card">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:12px;">Resumen del pedido</div>
     <div class="sum-row"><span class="sum-k">👤 Cliente</span><span class="sum-v" id="s-client">—</span></div>
@@ -402,12 +452,60 @@ input::placeholder { color:var(--muted); font-size:14px; }
     <div class="sum-row"><span class="sum-k" style="font-weight:600;color:var(--text);">💵 Total estimado</span><span class="sum-v highlight" id="s-total">—</span></div>
   </div>
 
-  <div class="export-grid">
-    <button class="btn-secondary" onclick="alert('Generando PDF…')">📄 PDF</button>
-    <button class="btn-secondary" onclick="alert('Enviando email…')">📧 Email</button>
-    <button class="btn-secondary" onclick="alert('Guardado en CRM')">💾 CRM</button>
-    <button class="btn-secondary" onclick="alert('Compartir WhatsApp')">💬 WhatsApp</button>
+  <!-- BOTÓN ENVIAR A APROBACIÓN -->
+  <div id="approvalSection">
+    <button class="btn-primary" id="sendApprovalBtn" onclick="sendForApproval()" style="margin-bottom:8px;">
+      📤 ENVIAR A APROBACIÓN
+    </button>
+    <div style="font-size:11px;color:var(--muted);text-align:center;padding-bottom:4px;">Se notificará al Subgerente Comercial</div>
   </div>
+
+  <!-- ESTADO: PENDIENTE DE APROBACIÓN -->
+  <div id="pendingSection" style="display:none;">
+    <div style="background:rgba(245,194,48,0.08);border:1px solid rgba(245,194,48,0.25);border-radius:16px;padding:20px;text-align:center;margin-bottom:14px;">
+      <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">Pendiente de aprobación</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;">Cotización enviada al <strong style="color:var(--text);">Subgerente Comercial</strong>.<br>Recibirás una notificación cuando sea revisada.</div>
+      <div style="margin-top:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px;display:inline-flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--muted);">Folio:</span>
+        <span id="folioNum" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</span>
+      </div>
+      <!-- DEMO: simular aprobación -->
+      <div style="margin-top:16px;">
+        <button onclick="simulateApproval()" style="background:rgba(245,194,48,0.15);border:1px solid rgba(245,194,48,0.3);border-radius:10px;padding:10px 20px;color:var(--gold);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:600;">
+          🔑 Demo: Aprobar como Subgerente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADO: APROBADO — COMPARTIR DESBLOQUEADO -->
+  <div id="approvedSection" style="display:none;">
+    <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:16px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
+      <div style="width:44px;height:44px;background:rgba(34,197,94,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">✅</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--green);">Cotización aprobada</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Aprobada por: <strong style="color:var(--text);" id="approverName">—</strong> · <span id="approvalTime">—</span></div>
+      </div>
+    </div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--text);margin-bottom:10px;">Compartir con el cliente</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button class="btn-secondary" style="border-color:rgba(37,211,102,0.3);color:#25d366;" onclick="shareWhatsApp()">
+        <span style="font-size:16px;">💬</span> WhatsApp
+      </button>
+      <button class="btn-secondary" style="border-color:rgba(59,130,246,0.3);color:var(--blue);" onclick="shareEmail()">
+        <span style="font-size:16px;">📧</span> Email
+      </button>
+      <button class="btn-secondary" onclick="sharePDF()">
+        <span style="font-size:16px;">📄</span> PDF
+      </button>
+      <button class="btn-secondary" onclick="saveCRM()">
+        <span style="font-size:16px;">💾</span> Guardar CRM
+      </button>
+    </div>
+  </div>
+
   <div style="height:40px;"></div>
 </div>
 
@@ -567,6 +665,8 @@ function updateCities(){
 }
 
 // ====== GENERATE QUOTE ======
+let priceState = { min:0, sugg:0, max:0, chosen:0, vol:0, c4:0 };
+
 function generateQuote(){
   if(!state.client||!state.sku){alert('Completa cliente y producto primero.');return;}
   const vol=parseInt(document.getElementById('volInput').value)||20;
@@ -577,7 +677,6 @@ function generateQuote(){
   let p=state.sku.basePrice;
   p*=(CLIENT_MOD_MAP[state.client.tipo]||1.0);
   p*=(HIST_MOD_MAP[state.client.hist]||1.0);
-  // derive pay mod
   let pm=1.0;
   if(state.client.pay==='Contado') pm=0.97;
   else if(state.client.pay.includes('15')) pm=0.99;
@@ -589,28 +688,40 @@ function generateQuote(){
   p*=(DEST_MOD_MAP[state.estado]||1.02);
   p*=(DEL_MOD_MAP[state.delivery]||1.0);
 
-  const c1=p*1.072; // Ternium
-  const c2=p*1.058; // Mittal
-  const c3=p*1.041; // Gasa
-  const c4=p*1.029; // SuAcero
-  const cheapest=c4;
-  const total=p*vol, savings=(cheapest-p)*vol;
+  const c1=p*1.072, c2=p*1.058, c3=p*1.041, c4=p*1.029;
   const d1=Math.round((1-p/c1)*100), d2=Math.round((1-p/c2)*100), d3=Math.round((1-p/c3)*100), d4=Math.round((1-p/c4)*100);
 
+  // Price range: min = p*0.92 (agresivo), sugg = p, max = p*1.06 (conservador)
+  const pMin = Math.round(p * 0.92);
+  const pSugg = Math.round(p);
+  const pMax = Math.round(p * 1.06);
+  priceState = { min:pMin, sugg:pSugg, max:pMax, chosen:pSugg, vol:vol, c4:c4 };
+
+  // Competitor table
+  document.getElementById('q-comp1').innerHTML=`$${fmt(c1)} <span class="ct-diff">-${d1}%</span>`;
+  document.getElementById('q-comp2').innerHTML=`$${fmt(c2)} <span class="ct-diff">-${d2}%</span>`;
+  document.getElementById('q-comp3').innerHTML=`$${fmt(c3)} <span class="ct-diff">-${d3}%</span>`;
+  document.getElementById('q-comp4').innerHTML=`$${fmt(c4)} <span class="ct-diff">-${d4}%</span>`;
+
+  // Price range labels
+  document.getElementById('priceMin').textContent='$'+fmt(pMin);
+  document.getElementById('priceSugg').textContent='$'+fmt(pSugg);
+  document.getElementById('priceMax').textContent='$'+fmt(pMax);
+
+  // Position suggestion marker
+  const suggPct = ((pSugg - pMin) / (pMax - pMin)) * 100;
+  document.getElementById('suggMark').style.left = suggPct + '%';
+
+  // Init slider at suggested price
+  document.getElementById('priceSlider').value = Math.round(((pSugg - pMin) / (pMax - pMin)) * 100);
+  onSliderMove(document.getElementById('priceSlider').value);
+
+  // Score (based on suggested price)
   const hScores={1:50,2:62,3:72,4:82,5:92};
   const pScore=Math.min(96,60+d4*5);
   const hScore=hScores[state.client.hist]||70;
   const dScore=state.delivery==='planta'?88:state.delivery==='lab_dest'?80:72;
   const score=Math.round((pScore+hScore+dScore)/3);
-
-  document.getElementById('q-price').textContent=fmt(p);
-  document.getElementById('q-comp1').innerHTML=`$${fmt(c1)} <span class="ct-diff">-${d1}%</span>`;
-  document.getElementById('q-comp2').innerHTML=`$${fmt(c2)} <span class="ct-diff">-${d2}%</span>`;
-  document.getElementById('q-comp3').innerHTML=`$${fmt(c3)} <span class="ct-diff">-${d3}%</span>`;
-  document.getElementById('q-comp4').innerHTML=`$${fmt(c4)} <span class="ct-diff">-${d4}%</span>`;
-  document.getElementById('q-ours').textContent=`$${fmt(p)}`;
-  document.getElementById('q-savings').textContent=`$${fmtBig(savings)} MXN`;
-
   const offset=175.9-(score/100)*175.9;
   const color=score>=80?'var(--green)':score>=65?'var(--gold)':'var(--red)';
   document.getElementById('scoreCircle').style.strokeDashoffset=offset;
@@ -619,14 +730,16 @@ function generateQuote(){
   document.getElementById('scoreNum').style.color=color;
   document.getElementById('scoreDesc').textContent=score>=85?'Propuesta muy competitiva':score>=70?'Propuesta competitiva':'Revisar condiciones';
 
+  // Strategy
   let strat='';
-  if(state.client.hist>=5&&state.client.pay==='Contado') strat=`<strong>Cliente VIP al contado</strong>: Precio muy agresivo. Propone contrato anual para asegurar volumen y bloqueo de precio a 90 días.`;
-  else if(state.client.tipo.includes('Gobierno')) strat=`<strong>Licitación pública</strong>: Asegura documentación técnica completa (NMX, ASTM). El precio es competitivo pero los requisitos técnicos son el diferenciador clave.`;
-  else if(vol>=100) strat=`<strong>Pedido de alto volumen</strong>: Considera proponer descuento escalonado o entregas parciales para facilitar el cierre. Puedes ceder hasta <strong>1.5%</strong> más sin afectar margen mínimo.`;
-  else if(state.client.hist===1) strat=`<strong>Cliente nuevo</strong>: Ofrece visita técnica gratuita y muestra de certificado. El precio competitivo es una buena palanca de entrada.`;
-  else strat=`Tu precio es <strong>${d4}% menor</strong> que SuAcero, el competidor más cercano. Destaca disponibilidad inmediata y servicio de traslape para cerrar.`;
+  if(state.client.hist>=5&&state.client.pay==='Contado') strat=`<strong>Cliente VIP al contado</strong>: Puedes ofrecer precio agresivo. Propone contrato anual para asegurar volumen y bloqueo a 90 días.`;
+  else if(state.client.tipo.includes('Gobierno')) strat=`<strong>Licitación pública</strong>: Asegura documentación técnica completa (NMX, ASTM). El precio es el diferenciador pero los requisitos técnicos son clave.`;
+  else if(vol>=100) strat=`<strong>Pedido de alto volumen</strong>: El precio agresivo es una palanca válida aquí. Puedes ceder margen sin comprometer la relación.`;
+  else if(state.client.hist===1) strat=`<strong>Cliente nuevo</strong>: Usa el precio sugerido como ancla. Ofrece visita técnica y certificado de calidad para cerrar.`;
+  else strat=`Tu precio es <strong>${d4}% menor</strong> que SuAcero. Mueve el slider al nivel que consideres necesario para cerrar el trato.`;
   document.getElementById('q-strategy').innerHTML=strat;
 
+  // Summary
   const cn=state.client.name;
   document.getElementById('s-client').textContent=cn.length>22?cn.slice(0,20)+'…':cn;
   document.getElementById('s-prod').textContent=state.sku.code;
@@ -634,10 +747,85 @@ function generateQuote(){
   document.getElementById('s-dest').textContent=(state.ciudad||state.estado.toUpperCase());
   document.getElementById('s-pay').textContent=state.client.pay;
   document.getElementById('s-del').textContent={planta:'Recoge en planta',lab_dest:'LAB destino',flete_sep:'Flete separado'}[state.delivery]||'—';
-  document.getElementById('s-total').textContent='$'+fmtBig(total);
+
+  // Reset approval state
+  document.getElementById('approvalSection').style.display='block';
+  document.getElementById('pendingSection').style.display='none';
+  document.getElementById('approvedSection').style.display='none';
+  document.getElementById('backBtn4').style.display='flex';
 
   goStep(4);
 }
+
+// ====== PRICE SLIDER ======
+function onSliderMove(val){
+  const pct = parseInt(val) / 100;
+  const price = Math.round(priceState.min + pct * (priceState.max - priceState.min));
+  priceState.chosen = price;
+
+  // Visual fill
+  document.getElementById('sliderFill').style.width = val + '%';
+
+  // Color feedback
+  const card = document.getElementById('priceRangeCard');
+  let zoneColor;
+  if(pct < 0.35) zoneColor = 'rgba(239,68,68,0.08)';
+  else if(pct < 0.65) zoneColor = 'rgba(34,197,94,0.06)';
+  else zoneColor = 'rgba(245,194,48,0.06)';
+  card.style.background = zoneColor;
+
+  // Chosen price display
+  document.getElementById('chosenPrice').textContent = fmt(price);
+
+  const total = price * priceState.vol;
+  const margin = priceState.c4 > 0 ? Math.round((1 - price/priceState.c4)*100) : 0;
+  document.getElementById('chosenTotal').textContent = '$' + fmtBig(total);
+  document.getElementById('chosenMargin').textContent = margin >= 0
+    ? `<span style="color:var(--green);">-${margin}% vs SuAcero</span>`
+    : `<span style="color:var(--red);">+${Math.abs(margin)}% sobre SuAcero</span>`;
+  document.getElementById('chosenMargin').innerHTML = document.getElementById('chosenMargin').textContent;
+
+  // Update savings
+  const savings = (priceState.c4 - price) * priceState.vol;
+  document.getElementById('q-savings').textContent = savings > 0 ? '$' + fmtBig(savings) + ' MXN' : '—';
+
+  // Update summary total
+  document.getElementById('s-total').textContent = '$' + fmtBig(total);
+}
+
+// ====== SEND FOR APPROVAL ======
+function sendForApproval(){
+  const folio = 'COT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*9000)+1000);
+  document.getElementById('folioNum').textContent = folio;
+  document.getElementById('approvalSection').style.display='none';
+  document.getElementById('pendingSection').style.display='block';
+  document.getElementById('priceSlider').disabled = true;
+  document.getElementById('backBtn4').style.display='none';
+  document.getElementById('priceRangeCard').style.opacity='0.6';
+  document.getElementById('priceRangeCard').style.pointerEvents='none';
+}
+
+// ====== SIMULATE APPROVAL (demo) ======
+function simulateApproval(){
+  const approvers = ['Ing. Ricardo Leal','Lic. Patricia Garza','Ing. Marco Salinas'];
+  const approver = approvers[Math.floor(Math.random()*approvers.length)];
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' · ' + now.toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+  document.getElementById('approverName').textContent = approver;
+  document.getElementById('approvalTime').textContent = timeStr;
+  document.getElementById('pendingSection').style.display='none';
+  document.getElementById('approvedSection').style.display='block';
+}
+
+// ====== SHARE FUNCTIONS ======
+function shareWhatsApp(){
+  const c=state.client, s=state.sku;
+  const msg=`Hola! Te compartimos la cotización aprobada:\n\n🔩 *${s.name}* (${s.code})\n📦 Volumen: ${priceState.vol} ton\n💲 Precio: $${fmt(priceState.chosen)}/ton sin IVA\n💵 Total: $${fmtBig(priceState.chosen*priceState.vol)} MXN\n\n✅ Cotización válida por 5 días hábiles.`;
+  alert('WhatsApp:\n\n' + msg);
+}
+function shareEmail(){ alert('Email enviado al contacto del cliente con la cotización aprobada.'); }
+function sharePDF(){ alert('Generando PDF oficial de la cotización aprobada…'); }
+function saveCRM(){ alert('Cotización guardada en CRM con folio ' + (document.getElementById('folioNum').textContent||'—')); }
 
 function fmt(n){return n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtBig(n){if(n>=1000000)return(n/1000000).toFixed(2)+' M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n.toFixed(0);}
